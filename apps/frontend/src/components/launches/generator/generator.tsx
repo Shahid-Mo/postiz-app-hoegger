@@ -122,6 +122,11 @@ const FirstStep: FC = (props) => {
         method: 'POST',
         body: JSON.stringify(value),
       });
+      if (!response.ok) {
+        setLoading(false);
+        setShowStep(t('generator_disabled', 'AI Generator feature is disabled'));
+        return;
+      }
       if (!response.body) {
         return;
       }

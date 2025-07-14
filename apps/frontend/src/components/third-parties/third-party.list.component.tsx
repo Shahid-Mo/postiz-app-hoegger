@@ -117,7 +117,16 @@ export const ThirdPartyListComponent: FC<{reload: () => void}> = (props) => {
   const { reload } = props;
 
   const integrationsList = useCallback(async () => {
-    return (await fetch('/third-party/list')).json();
+    try {
+      const response = await fetch('/third-party/list');
+      if (!response.ok) {
+        return []; // Return empty array if third-party service is disabled
+      }
+      return await response.json();
+    } catch (error) {
+      console.warn('Third-party service disabled or unavailable');
+      return []; // Return empty array on error
+    }
   }, []);
 
   const { data } = useSWR('third-party-list', integrationsList);

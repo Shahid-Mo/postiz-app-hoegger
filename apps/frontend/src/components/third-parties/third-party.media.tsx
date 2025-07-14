@@ -189,14 +189,23 @@ export const ThirdPartyMedia: FC<{
   const [popup, setPopup] = useState(false);
 
   const thirdParties = useCallback(async () => {
-    return (await (await fetch('/third-party')).json()).filter(
-      (f: any) => f.position === 'media'
-    );
+    try {
+      const response = await fetch('/third-party');
+      if (!response.ok) {
+        return []; // Return empty array if third-party service is disabled
+      }
+      return (await response.json()).filter(
+        (f: any) => f.position === 'media'
+      );
+    } catch (error) {
+      console.warn('Third-party service disabled or unavailable');
+      return []; // Return empty array on error
+    }
   }, []);
 
   const { data, isLoading, mutate } = useSWR('third-party', thirdParties);
 
-  if (isLoading || !data.length) {
+  if (isLoading || !data || !data.length) {
     return null;
   }
 

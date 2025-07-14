@@ -9,13 +9,16 @@ import { FieldValues, SubmitHandler, useForm } from 'react-hook-form';
 import { useT } from '@gitroom/react/translation/get.transation.service.client';
 export const RenderComponents: FC<{
   postId: string;
+  initialComments?: any[];
 }> = (props) => {
-  const { postId } = props;
+  const { postId, initialComments } = props;
   const fetch = useFetch();
   const comments = useCallback(async () => {
     return (await fetch(`/public/posts/${postId}/comments`)).json();
   }, [postId]);
-  const { data, mutate, isLoading } = useSWR('comments', comments);
+  const { data, mutate, isLoading } = useSWR(`comments-${postId}`, comments, {
+    fallbackData: initialComments ? { comments: initialComments } : undefined,
+  });
   const mapUsers = useMemo(() => {
     return (data?.comments || []).reduce(
       (all: any, current: any) => {
@@ -106,11 +109,12 @@ export const RenderComponents: FC<{
 };
 export const CommentsComponents: FC<{
   postId: string;
+  initialComments?: any[];
 }> = (props) => {
   const user = useUser();
   const t = useT();
 
-  const { postId } = props;
+  const { postId, initialComments } = props;
   const goToComments = useCallback(() => {
     window.location.href = `/auth?returnUrl=${window.location.href}`;
   }, []);
@@ -124,5 +128,5 @@ export const CommentsComponents: FC<{
       </Button>
     );
   }
-  return <RenderComponents postId={postId} />;
+  return <RenderComponents postId={postId} initialComments={initialComments} />;
 };

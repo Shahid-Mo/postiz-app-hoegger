@@ -42,4 +42,8 @@ export class GetPostsDto {
   @IsOptional()
   @IsString()
   customer: string;
+
+  @IsOptional()
+  @IsIn(['QUEUE', 'PUBLISHED', 'ERROR', 'DRAFT'])
+  state?: 'QUEUE' | 'PUBLISHED' | 'ERROR' | 'DRAFT';
 }

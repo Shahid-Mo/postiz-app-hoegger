@@ -56,6 +56,11 @@ export const useMenuItems = () => {
       path: '/third-party',
     },
     {
+      name: t('approvals', 'Approvals'),
+      icon: 'approvals',
+      path: '/approvals',
+    },
+    {
       name: t('billing', 'Billing'),
       icon: 'billing',
       path: '/billing',

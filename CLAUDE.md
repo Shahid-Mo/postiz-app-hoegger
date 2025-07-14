@@ -734,3 +734,181 @@ const copyToClipboard = useCallback(() => {
 - ✅ Single post preview sharing still works exactly as before
 - ✅ Bulk preview sharing now works correctly
 - ✅ All existing functionality preserved
+
+---
+
+# 🚧 TODO: Client Authentication Fix - Anonymous Commenting
+
+**Status: PLANNED** 📋
+
+## Current Problem
+When clients receive shared links (`/p/123?share=true` or `/bulk-preview?posts=123,456&share=true`), they get redirected to a login page instead of being able to view posts and comment directly.
+
+## Root Cause Analysis
+The preview pages are currently protected by authentication middleware that requires users to be logged into Postiz. This prevents external clients from accessing shared content.
+
+## Solution Plan: Two-Phase Implementation
+
+### Phase 1: Remove Authentication Requirement (Day 1) 
+**Goal:** Allow anyone to view shared posts and comment anonymously
+
+#### 1.1 Remove Auth Guards from Preview Routes
+- **Single Post Preview:** `/p/[id]` - Remove authentication requirement
+- **Bulk Preview:** `/bulk-preview` - Remove authentication requirement
+- **Comments API:** `POST /posts/:id/comments` - Allow anonymous comments
+
+#### 1.2 Update Preview Page Components
+- Remove authentication checks from preview components
+- Update comment forms to work without user authentication
+- Add anonymous user handling in comments
+
+#### 1.3 Backend Changes Required
+- Update `public.controller.ts` comment endpoints to allow anonymous users
+- Modify comment creation logic to handle anonymous users
+- Add IP-based rate limiting for anonymous comments
+
+### Phase 2: Simple User Identification (Day 2)
+**Goal:** Collect client name/email for better comment attribution
+
+#### 2.1 Client Information Collection
+- Add simple modal asking for name and email when first commenting
+- Store client info in localStorage to avoid re-asking
+- Include client info in comment creation API
+
+#### 2.2 Enhanced Comment Display
+- Show client name instead of "Anonymous User"
+- Display client email (or just name) in comment threads
+- Add visual distinction between authenticated and anonymous comments
+
+#### 2.3 Persistent Client Session
+- Create simple client session system (no login required)
+- Store client info in localStorage for future visits
+- Optional: Add "Edit Profile" to change name/email
+
+## Technical Implementation Details
+
+### Anonymous Comment System
+```typescript
+// Comment creation without authentication
+interface AnonymousComment {
+  content: string;
+  clientName?: string;
+  clientEmail?: string;
+  postId: string;
+  ip: string; // For rate limiting
+  userAgent: string; // For spam protection
+}
+```
+
+### Client Information Modal
+```typescript
+interface ClientInfo {
+  name: string;
+  email: string;
+  rememberedAt: Date;
+}
+
+// LocalStorage key: 'postiz-client-info'
+```
+
+### Rate Limiting Strategy
+- **Anonymous Users:** 3 comments per IP per hour
+- **Identified Clients:** 10 comments per email per hour
+- **Spam Protection:** Block duplicate comments within 5 minutes
+
+## Files to Modify
+
+### Backend Changes
+- `apps/backend/src/api/routes/public.controller.ts` - Remove auth guards
+- `apps/backend/src/api/routes/posts.controller.ts` - Update comment creation
+- `libraries/nestjs-libraries/src/database/prisma/posts/posts.service.ts` - Anonymous comment logic
+
+### Frontend Changes
+- `apps/frontend/src/app/(app)/(preview)/p/[id]/page.tsx` - Remove auth requirements
+- `apps/frontend/src/app/(app)/(preview)/bulk-preview/page.tsx` - Remove auth requirements
+- `apps/frontend/src/components/preview/comments.components.tsx` - Anonymous comment forms
+- Create: `apps/frontend/src/components/preview/client-info-modal.tsx` - Name/email collection
+
+### Database Schema (if needed)
+```sql
+-- Add optional client fields to comments table
+ALTER TABLE comments ADD COLUMN client_name VARCHAR(255);
+ALTER TABLE comments ADD COLUMN client_email VARCHAR(255);
+ALTER TABLE comments ADD COLUMN client_ip VARCHAR(45);
+ALTER TABLE comments ADD COLUMN is_anonymous BOOLEAN DEFAULT false;
+```
+
+## User Experience Flow
+
+### Phase 1: Anonymous Comments
+1. Client clicks shared link → Opens post preview (no login required) ✅
+2. Client clicks "Add Comment" → Comment form appears ✅
+3. Client types comment and submits → Comment posted as "Anonymous User" ✅
+4. Client sees comment immediately in thread ✅
+
+### Phase 2: Client Identification
+1. Client clicks shared link → Opens post preview (no login required) ✅
+2. Client clicks "Add Comment" → Modal appears asking for name/email ✅
+3. Client fills name/email → Info saved to localStorage ✅
+4. Client types comment and submits → Comment posted with client name ✅
+5. Future visits → Uses saved name/email (no re-asking) ✅
+
+## Benefits of This Approach
+
+### ✅ Removes Login Friction
+- Clients don't need Postiz accounts
+- No authentication barriers
+- Immediate access to shared content
+
+### ✅ Maintains Comment Quality
+- Client name/email for better attribution
+- Rate limiting prevents spam
+- IP tracking for abuse prevention
+
+### ✅ Improved User Experience
+- One-time name/email collection
+- Persistent client sessions
+- Clear comment attribution
+
+### ✅ Backward Compatibility
+- Existing authenticated users continue to work
+- No changes to main application flow
+- Anonymous and authenticated comments coexist
+
+## Security Considerations
+
+### Rate Limiting
+- IP-based limits for anonymous users
+- Email-based limits for identified clients
+- Progressive restrictions for abuse
+
+### Spam Prevention
+- Content filtering for inappropriate comments
+- Duplicate comment detection
+- IP blocking for persistent abuse
+
+### Data Privacy
+- Client email only stored locally (localStorage)
+- No server-side client account creation
+- Optional email for notifications
+
+## Success Metrics
+
+### Adoption
+- % of shared links that result in comments
+- Average comments per shared post
+- Client return rate to shared links
+
+### Quality
+- Comment spam rate
+- Client satisfaction with commenting process
+- Reduction in authentication-related support requests
+
+## Timeline
+
+**Total: 2 days**
+
+- **Day 1:** Remove auth requirements + anonymous commenting
+- **Day 2:** Add client identification modal + localStorage persistence
+
+This approach solves the immediate problem (login requirement) while adding a smooth client identification system that doesn't create barriers to commenting.

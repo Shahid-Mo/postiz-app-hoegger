@@ -98,7 +98,16 @@ export const ThirdPartyComponent = () => {
   const fetch = useFetch();
 
   const integrations = useCallback(async () => {
-    return (await fetch('/third-party')).json();
+    try {
+      const response = await fetch('/third-party');
+      if (!response.ok) {
+        return []; // Return empty array if third-party service is disabled
+      }
+      return await response.json();
+    } catch (error) {
+      console.warn('Third-party service disabled or unavailable');
+      return []; // Return empty array on error
+    }
   }, []);
 
   const { data, isLoading, mutate } = useSWR('third-party', integrations);

@@ -8,7 +8,7 @@ import {
   Delete,
 } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
-import { ThirdPartyManager } from '@gitroom/nestjs-libraries/3rdparties/thirdparty.manager';
+// import { ThirdPartyManager } from '@gitroom/nestjs-libraries/3rdparties/thirdparty.manager';  // DISABLED
 import { GetOrgFromRequest } from '@gitroom/nestjs-libraries/user/org.from.request';
 import { Organization } from '@prisma/client';
 import { AuthService } from '@gitroom/helpers/auth/auth.service';
@@ -21,7 +21,7 @@ export class ThirdPartyController {
   private storage = UploadFactory.createStorage();
 
   constructor(
-    private _thirdPartyManager: ThirdPartyManager,
+    // private _thirdPartyManager: ThirdPartyManager,  // DISABLED
     private _mediaService: MediaService,
   ) {}
 

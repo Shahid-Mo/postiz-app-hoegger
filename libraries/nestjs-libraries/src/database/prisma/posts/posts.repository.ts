@@ -125,7 +125,7 @@ export class PostsRepository {
               },
             ],
           },
-          {
+          ...(query.state === 'DRAFT' ? [] : [{
             OR: [
               {
                 publishDate: {
@@ -139,7 +139,7 @@ export class PostsRepository {
                 },
               },
             ],
-          },
+          }]),
         ],
         deletedAt: null,
         parentPostId: null,
@@ -150,6 +150,7 @@ export class PostsRepository {
               },
             }
           : {}),
+        ...(query.state ? { state: query.state } : {}),
       },
       select: {
         id: true,

@@ -21,9 +21,9 @@ import { ThirdPartyModule } from '@gitroom/nestjs-libraries/3rdparties/thirdpart
     ApiModule,
     PluginModule,
     PublicApiModule,
-    AgentModule,
-    McpModule,
-    ThirdPartyModule,
+    // AgentModule,  // DISABLED: AI/ML features
+    // McpModule,  // DISABLED: MCP features
+    // ThirdPartyModule,  // DISABLED: 3rd party integrations
     ThrottlerModule.forRoot([
       {
         ttl: 3600000,
@@ -48,8 +48,8 @@ import { ThirdPartyModule } from '@gitroom/nestjs-libraries/3rdparties/thirdpart
     ApiModule,
     PluginModule,
     PublicApiModule,
-    AgentModule,
-    McpModule,
+    // AgentModule,  // DISABLED
+    // McpModule,  // DISABLED
     ThrottlerModule,
   ],
 })
