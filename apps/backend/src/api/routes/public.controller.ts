@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Post, Req, Res } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post, Req, Res, Query, BadRequestException } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import { AgenciesService } from '@gitroom/nestjs-libraries/database/prisma/agencies/agencies.service';
 import { PostsService } from '@gitroom/nestjs-libraries/database/prisma/posts/posts.service';
@@ -9,7 +9,7 @@ import { TrackEnum } from '@gitroom/nestjs-libraries/user/track.enum';
 import { Request, Response } from 'express';
 import { makeId } from '@gitroom/nestjs-libraries/services/make.is';
 import { getCookieUrlFromDomain } from '@gitroom/helpers/subdomain/subdomain.management';
-import { AgentGraphInsertService } from '@gitroom/nestjs-libraries/agent/agent.graph.insert.service';
+// import { AgentGraphInsertService } from '@gitroom/nestjs-libraries/agent/agent.graph.insert.service';  // DISABLED
 import { Nowpayments } from '@gitroom/nestjs-libraries/crypto/nowpayments';
 
 @ApiTags('Public')
@@ -18,21 +18,21 @@ export class PublicController {
   constructor(
     private _agenciesService: AgenciesService,
     private _trackService: TrackService,
-    private _agentGraphInsertService: AgentGraphInsertService,
+    // private _agentGraphInsertService: AgentGraphInsertService,  // DISABLED
     private _postsService: PostsService,
     private _nowpayments: Nowpayments
   ) {}
-  @Post('/agent')
-  async createAgent(@Body() body: { text: string; apiKey: string }) {
-    if (
-      !body.apiKey ||
-      !process.env.AGENT_API_KEY ||
-      body.apiKey !== process.env.AGENT_API_KEY
-    ) {
-      return;
-    }
-    return this._agentGraphInsertService.newPost(body.text);
-  }
+  // @Post('/agent')  // DISABLED: Agent functionality
+  // async createAgent(@Body() body: { text: string; apiKey: string }) {
+  //   if (
+  //     !body.apiKey ||
+  //     !process.env.AGENT_API_KEY ||
+  //     body.apiKey !== process.env.AGENT_API_KEY
+  //   ) {
+  //     return;
+  //   }
+  //   return this._agentGraphInsertService.newPost(body.text);
+  // }
 
   @Get('/agencies-list')
   async getAgencyByUser() {
@@ -52,6 +52,89 @@ export class PublicController {
   @Get('/agencies-list-count')
   async getAgenciesCount() {
     return this._agenciesService.getCount();
+  }
+
+  @Get(`/posts/bulk`)
+  async getBulkPosts(@Query('posts') postIds: string) {
+    if (!postIds) {
+      throw new BadRequestException('Posts parameter is required');
+    }
+    
+    const ids = postIds.split(',').filter(Boolean);
+    if (ids.length === 0) {
+      throw new BadRequestException('No valid post IDs provided');
+    }
+    
+    if (ids.length > 10) {
+      throw new BadRequestException('Maximum 10 posts allowed');
+    }
+    
+    try {
+      const posts = await Promise.all(
+        ids.map(async (id) => {
+          try {
+            return await this._postsService.getPostsRecursively(id, true);
+          } catch (error) {
+            console.warn(`Failed to fetch post ${id}:`, error);
+            return [];
+          }
+        })
+      );
+      
+      return posts.flat().map(({ childrenPost, ...p }) => ({
+        ...p,
+        ...(p.integration
+          ? {
+              integration: {
+                id: p.integration.id,
+                name: p.integration.name,
+                picture: p.integration.picture,
+                providerIdentifier: p.integration.providerIdentifier,
+                profile: p.integration.profile,
+              },
+            }
+          : {}),
+      }));
+    } catch (error) {
+      console.error('Error fetching bulk posts:', error);
+      throw new BadRequestException('Failed to fetch posts');
+    }
+  }
+
+  @Get(`/posts/bulk/comments`)
+  async getBulkComments(@Query('posts') postIds: string) {
+    if (!postIds) {
+      throw new BadRequestException('Posts parameter is required');
+    }
+    
+    const ids = postIds.split(',').filter(Boolean);
+    if (ids.length === 0) {
+      throw new BadRequestException('No valid post IDs provided');
+    }
+    
+    if (ids.length > 10) {
+      throw new BadRequestException('Maximum 10 posts allowed');
+    }
+    
+    try {
+      const commentsMap: Record<string, any> = {};
+      
+      await Promise.all(
+        ids.map(async (id) => {
+          try {
+            commentsMap[id] = await this._postsService.getComments(id);
+          } catch (error) {
+            console.warn(`Failed to fetch comments for post ${id}:`, error);
+            commentsMap[id] = [];
+          }
+        })
+      );
+      
+      return { comments: commentsMap };
+    } catch (error) {
+      console.error('Error fetching bulk comments:', error);
+      throw new BadRequestException('Failed to fetch comments');
+    }
   }
 
   @Get(`/posts/:id`)

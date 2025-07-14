@@ -650,9 +650,16 @@ export const MultiMediaComponent: FC<{
                       {media?.path?.indexOf('mp4') > -1 ? (
                         <VideoFrame url={mediaDirectory.set(media?.path)} />
                       ) : (
-                        <img
+                        <Image
+                          width={80}
+                          height={80}
                           className="w-full h-full object-cover rounded-[4px]"
                           src={mediaDirectory.set(media?.path)}
+                          alt="media"
+                          onError={(e) => {
+                            console.error('Image failed to load:', media?.path);
+                            e.currentTarget.src = '/no-picture.jpg';
+                          }}
                         />
                       )}
                     </div>
@@ -788,10 +795,17 @@ export const MediaComponent: FC<{
       <div className="text-[12px]">{description}</div>
       {!!currentMedia && (
         <div className="my-[20px] cursor-pointer w-[200px] h-[200px] border-2 border-tableBorder">
-          <img
+          <Image
+            width={200}
+            height={200}
             className="w-full h-full object-cover"
             src={mediaDirectory.set(currentMedia.path)}
+            alt="media"
             onClick={() => window.open(mediaDirectory.set(currentMedia.path))}
+            onError={(e) => {
+              console.error('Image failed to load:', currentMedia.path);
+              e.currentTarget.src = '/no-picture.jpg';
+            }}
           />
         </div>
       )}

@@ -13,7 +13,21 @@ export const CopyClient = () => {
       t('link_copied_to_clipboard', 'Link copied to clipboard'),
       'success'
     );
-    copy(window.location.href.split?.('?')?.shift()!);
+    
+    const currentUrl = window.location.href;
+    let urlToCopy = currentUrl;
+    
+    // For bulk preview, preserve query parameters but ensure share=true
+    if (currentUrl.includes('/bulk-preview')) {
+      const url = new URL(currentUrl);
+      url.searchParams.set('share', 'true'); // Ensure share=true is set
+      urlToCopy = url.toString();
+    } else {
+      // For single posts, use original behavior (remove query params)
+      urlToCopy = currentUrl.split?.('?')?.shift()!;
+    }
+    
+    copy(urlToCopy);
   }, []);
   return (
     <Button onClick={copyToClipboard}>
