@@ -162,6 +162,21 @@ export class PublicController {
     return { comments: await this._postsService.getComments(postId) };
   }
 
+  @Post(`/posts/:id/comments`)
+  async createAnonymousComment(
+    @Param('id') postId: string,
+    @RealIP() ip: string,
+    @UserAgent() userAgent: string,
+    @Body() body: { comment: string; clientName?: string; clientEmail?: string }
+  ) {
+    return this._postsService.createAnonymousComment(postId, body.comment, {
+      clientName: body.clientName,
+      clientEmail: body.clientEmail,
+      ip,
+      userAgent,
+    });
+  }
+
   @Post('/t')
   async trackEvent(
     @Res() res: Response,

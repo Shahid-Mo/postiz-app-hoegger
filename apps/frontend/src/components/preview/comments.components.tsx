@@ -35,8 +35,11 @@ export const RenderComponents: FC<{
   const submit: SubmitHandler<FieldValues> = useCallback(
     async (e) => {
       setValue('comment', '');
-      await fetch(`/posts/${postId}/comments`, {
+      await fetch(`/public/posts/${postId}/comments`, {
         method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
         body: JSON.stringify(e),
       });
       mutate();
@@ -95,9 +98,17 @@ export const RenderComponents: FC<{
             <div className="flex-1 space-y-1">
               <div className="flex items-center space-x-2">
                 <h3 className="text-sm font-semibold">
-                  {t('user', 'User')}
-                  {mapUsers[comment.userId]}
+                  {comment.isAnonymous && comment.clientName
+                    ? comment.clientName
+                    : comment.isAnonymous
+                    ? t('anonymous_user', 'Anonymous User')
+                    : `${t('user', 'User')} ${mapUsers[comment.userId]}`}
                 </h3>
+                {comment.isAnonymous && (
+                  <span className="text-xs text-gray-500 bg-gray-700 px-2 py-1 rounded">
+                    {t('guest', 'Guest')}
+                  </span>
+                )}
               </div>
               <p className="text-sm text-gray-300">{comment.content}</p>
             </div>
@@ -111,22 +122,8 @@ export const CommentsComponents: FC<{
   postId: string;
   initialComments?: any[];
 }> = (props) => {
-  const user = useUser();
-  const t = useT();
-
   const { postId, initialComments } = props;
-  const goToComments = useCallback(() => {
-    window.location.href = `/auth?returnUrl=${window.location.href}`;
-  }, []);
-  if (!user?.id) {
-    return (
-      <Button onClick={goToComments}>
-        {t(
-          'login_register_to_add_comments',
-          'Login / Register to add comments'
-        )}
-      </Button>
-    );
-  }
+  
+  // Always show comments - no login required for anonymous commenting
   return <RenderComponents postId={postId} initialComments={initialComments} />;
 };

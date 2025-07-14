@@ -645,6 +645,41 @@ export class PostsRepository {
     });
   }
 
+  async createAnonymousComment(
+    postId: string,
+    content: string,
+    clientInfo: {
+      clientName?: string;
+      clientEmail?: string;
+      ip: string;
+      userAgent: string;
+    }
+  ) {
+    // First, find the organization from the post
+    const post = await this._post.model.post.findUnique({
+      where: { id: postId },
+      select: { organizationId: true }
+    });
+    
+    if (!post) {
+      throw new Error('Post not found');
+    }
+
+    // Create anonymous comment using the post's organization
+    return this._comments.model.comments.create({
+      data: {
+        organizationId: post.organizationId,
+        userId: null, // No user for anonymous comments
+        postId,
+        content,
+        clientName: clientInfo.clientName,
+        clientEmail: clientInfo.clientEmail,
+        clientIp: clientInfo.ip,
+        isAnonymous: true,
+      },
+    });
+  }
+
   async getPostsSince(orgId: string, since: string) {
     return this._post.model.post.findMany({
       where: {

@@ -1,4 +1,3 @@
-import { internalFetch } from '@gitroom/helpers/utils/internal.fetch';
 export const dynamic = 'force-dynamic';
 import { Metadata } from 'next';
 import { isGeneralServerSide } from '@gitroom/helpers/utils/is.general.server.side';
@@ -41,7 +40,7 @@ export default async function BulkPreview({
 
   let posts = [];
   try {
-    const response = await internalFetch(`/public/posts/bulk?posts=${postIds.join(',')}`);
+    const response = await fetch(`${process.env.BACKEND_INTERNAL_URL}/public/posts/bulk?posts=${postIds.join(',')}`);
     posts = await response.json();
   } catch (error) {
     console.error('Failed to fetch bulk posts:', error);

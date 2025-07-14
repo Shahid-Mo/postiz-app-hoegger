@@ -996,6 +996,19 @@ export class PostsService {
     return this._postRepository.createComment(orgId, userId, postId, comment);
   }
 
+  createAnonymousComment(
+    postId: string,
+    comment: string,
+    clientInfo: {
+      clientName?: string;
+      clientEmail?: string;
+      ip: string;
+      userAgent: string;
+    }
+  ) {
+    return this._postRepository.createAnonymousComment(postId, comment, clientInfo);
+  }
+
   async sendDigestEmail(subject: string, orgId: string, since: string) {
     const getNotificationsForOrgSince =
       await this._notificationService.getNotificationsSince(orgId, since);

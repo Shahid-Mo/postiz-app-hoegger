@@ -1,4 +1,3 @@
-import { internalFetch } from '@gitroom/helpers/utils/internal.fetch';
 export const dynamic = 'force-dynamic';
 import { Metadata } from 'next';
 import { isGeneralServerSide } from '@gitroom/helpers/utils/is.general.server.side';
@@ -26,7 +25,7 @@ export default async function Auth({
     share?: string;
   };
 }) {
-  const post = await (await internalFetch(`/public/posts/${id}`)).json();
+  const post = await (await fetch(`${process.env.BACKEND_INTERNAL_URL}/public/posts/${id}`)).json();
   const t = await getT();
   if (!post.length) {
     return (
