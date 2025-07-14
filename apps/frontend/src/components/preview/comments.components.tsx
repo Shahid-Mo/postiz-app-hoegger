@@ -7,18 +7,26 @@ import { useFetch } from '@gitroom/helpers/utils/custom.fetch';
 import useSWR from 'swr';
 import { FieldValues, SubmitHandler, useForm } from 'react-hook-form';
 import { useT } from '@gitroom/react/translation/get.transation.service.client';
+import { ClientInfoModal } from './client-info-modal';
+import { useClientInfo } from '@gitroom/frontend/hooks/use-client-info';
 export const RenderComponents: FC<{
   postId: string;
   initialComments?: any[];
 }> = (props) => {
   const { postId, initialComments } = props;
   const fetch = useFetch();
+  const { clientInfo, hasClientInfo, saveClientInfo, isLoading: isClientInfoLoading } = useClientInfo();
+  const [showClientModal, setShowClientModal] = useState(false);
+  const [pendingComment, setPendingComment] = useState<string>('');
+  
   const comments = useCallback(async () => {
     return (await fetch(`/public/posts/${postId}/comments`)).json();
   }, [postId]);
+  
   const { data, mutate, isLoading } = useSWR(`comments-${postId}`, comments, {
     fallbackData: initialComments ? { comments: initialComments } : undefined,
   });
+  
   const mapUsers = useMemo(() => {
     return (data?.comments || []).reduce(
       (all: any, current: any) => {
@@ -31,21 +39,59 @@ export const RenderComponents: FC<{
       }
     ).users;
   }, [data]);
+  
   const { handleSubmit, register, setValue } = useForm();
+  
+  const submitComment = useCallback(async (commentText: string, clientName?: string, clientEmail?: string) => {
+    await fetch(`/public/posts/${postId}/comments`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        comment: commentText,
+        clientName,
+        clientEmail,
+      }),
+    });
+    mutate();
+  }, [postId, mutate, fetch]);
+  
   const submit: SubmitHandler<FieldValues> = useCallback(
     async (e) => {
+      const commentText = e.comment;
       setValue('comment', '');
-      await fetch(`/public/posts/${postId}/comments`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(e),
-      });
-      mutate();
+      
+      if (!hasClientInfo && !isClientInfoLoading) {
+        // Show modal to collect client info
+        setPendingComment(commentText);
+        setShowClientModal(true);
+      } else {
+        // Submit comment with existing client info
+        await submitComment(commentText, clientInfo?.name, clientInfo?.email);
+      }
     },
-    [postId, mutate]
+    [hasClientInfo, isClientInfoLoading, clientInfo, submitComment, setValue]
   );
+  
+  const handleClientInfoSubmit = useCallback(
+    async (info: { name: string; email: string }) => {
+      saveClientInfo(info);
+      setShowClientModal(false);
+      
+      // Submit the pending comment with the new client info
+      if (pendingComment) {
+        await submitComment(pendingComment, info.name, info.email);
+        setPendingComment('');
+      }
+    },
+    [saveClientInfo, submitComment, pendingComment]
+  );
+  
+  const handleModalClose = useCallback(() => {
+    setShowClientModal(false);
+    setPendingComment('');
+  }, []);
 
   const t = useT();
 
@@ -61,10 +107,19 @@ export const RenderComponents: FC<{
               required: true,
             })}
             className="flex w-full px-3 py-2 h-[98px] text-sm ring-offset-background placeholder:text-muted-foreground outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 min-h-[80px] resize-none text-white bg-third border border-tableBorder placeholder-gray-500 focus:ring-0"
-            placeholder="Add a comment..."
+            placeholder={hasClientInfo ? `Add a comment as ${clientInfo?.name}...` : "Add a comment..."}
             defaultValue={''}
           />
-          <div className="flex justify-end">
+          <div className="flex justify-between items-center">
+            <div className="text-xs text-gray-500">
+              {hasClientInfo ? (
+                <span>
+                  {t('commenting_as', 'Commenting as:')} <span className="text-white">{clientInfo?.name}</span>
+                </span>
+              ) : (
+                <span>{t('first_comment_info', 'You\'ll be asked for your name and email on first comment')}</span>
+              )}
+            </div>
             <Button type="submit">
               <svg
                 xmlns="http://www.w3.org/2000/svg"
@@ -115,6 +170,12 @@ export const RenderComponents: FC<{
           </div>
         ))}
       </div>
+      
+      <ClientInfoModal
+        isOpen={showClientModal}
+        onSubmit={handleClientInfoSubmit}
+        onClose={handleModalClose}
+      />
     </>
   );
 };
