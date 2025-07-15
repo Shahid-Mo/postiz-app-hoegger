@@ -3,36 +3,37 @@
 ## 📋 Deployment Progress Tracker
 
 ### ✅ COMPLETED
-- [x] Created Railway configuration files for all 4 services
-- [x] Documentation created
+- [x] Set up SSH credentials for GitHub
+- [x] Push configuration files to GitHub  
+- [x] Clean up conflicting railway-*.toml files
+- [x] Railway CLI installed and logged in
+- [x] PostgreSQL and Redis databases created in Railway
+- [x] Repository ready for Docker deployment
 
-### 🔄 IN PROGRESS
-- [ ] Set up SSH credentials for GitHub
-- [ ] Push configuration files to GitHub
+### 🔄 IN PROGRESS  
+- [ ] Deploy using Railway CLI with Docker
 
 ### 📝 PENDING
-- [ ] Create Railway project and add database/redis
-- [ ] Configure and deploy Backend service
-- [ ] Configure and deploy Frontend service  
-- [ ] Configure and deploy Workers service
-- [ ] Configure and deploy Cron service
-- [ ] Test all services working together
+- [ ] Configure environment variables via CLI
+- [ ] Generate Railway domain
+- [ ] Test deployment and verify functionality
 
 ---
 
 ## 🏗️ Architecture Overview
 
-**Postiz consists of 4 microservices:**
+**Postiz Single Container Deployment:**
 
-1. **Frontend** (`apps/frontend`) - Web UI (Next.js)
-2. **Backend** (`apps/backend`) - API & coordination (NestJS)
+**Single Docker Container** containing all services:
+1. **Frontend** (`apps/frontend`) - Web UI (Next.js) - Port 4200
+2. **Backend** (`apps/backend`) - API & coordination (NestJS) - Port 3000  
 3. **Workers** (`apps/workers`) - Background job processing
 4. **Cron** (`apps/cron`) - Scheduled tasks
 
-**Shared Resources:**
-- **PostgreSQL Database** - Stores all data
-- **Redis** - Job queue and caching
-- **File Storage** - Local filesystem for uploads
+**External Resources:**
+- **PostgreSQL Database** - Railway plugin
+- **Redis** - Railway plugin  
+- **File Storage** - Local filesystem in container
 
 ---
 
@@ -64,48 +65,69 @@
 
 ---
 
-## 🎯 Step-by-Step Deployment Plan
+## 🎯 Railway CLI Deployment Steps
 
-### STEP 1: GitHub Setup ⏳
-1. Set up SSH credentials for GitHub
-2. Push Railway configuration files to repository
-3. Verify all files are in GitHub
-
-### STEP 2: Railway Project Setup
-1. Create new Railway project
-2. Add PostgreSQL database plugin
-3. Add Redis plugin
-4. Note connection strings
-
-### STEP 3: Service Deployment (Deploy in this order)
-1. **Backend Service** (API must be ready first)
-2. **Frontend Service** (needs backend URL)
-3. **Workers Service** (processes backend jobs)
-4. **Cron Service** (schedules backend tasks)
-
-### STEP 4: Environment Configuration
-Set these variables for ALL services:
+### STEP 1: Link to Railway Project ✅
 ```bash
-# Database & Redis (from Railway plugins)
-DATABASE_URL=postgresql://...
-REDIS_URL=redis://...
+# Link CLI to your existing Railway project
+railway link
 
-# Inter-service communication
-FRONTEND_URL=https://postiz-frontend.railway.app
-BACKEND_URL=https://postiz-backend.railway.app
-
-# Application settings
-NODE_ENV=production
-STORAGE_PROVIDER=local
-UPLOAD_DIRECTORY=/app/uploads
+# Check current project status  
+railway status
 ```
 
-### STEP 5: Testing & Verification
-1. Test backend API endpoints
-2. Test frontend UI loads
-3. Test workers processing jobs
-4. Test cron jobs running
-5. Test complete user workflow
+### STEP 2: Deploy with Docker
+```bash
+# Deploy current directory using Dockerfile.dev
+railway up
+
+# Watch deployment progress
+railway logs --build
+```
+
+### STEP 3: Set Environment Variables ✅
+```bash
+# Database connections (COMPLETED ✅)
+railway variables --set "DATABASE_URL=postgresql://postgres:jppYxQceeqESVQehyGHuFHmNBbxWEBTb@yamanote.proxy.rlwy.net:25056/railway"
+railway variables --set "REDIS_URL=redis://default:hjHUdGWpeMkNUympheIeuLBdVauNkcZT@caboose.proxy.rlwy.net:31174"
+
+# Core application settings (COMPLETED ✅)
+railway variables --set "NODE_ENV=production"
+railway variables --set "IS_GENERAL=true" 
+railway variables --set "JWT_SECRET=postiz-super-long-random-secret-key-for-production-minimum-32-characters-12345"
+railway variables --set "STORAGE_PROVIDER=local"
+railway variables --set "UPLOAD_DIRECTORY=/uploads"
+railway variables --set "NEXT_PUBLIC_UPLOAD_DIRECTORY=/uploads"
+railway variables --set "DISABLE_REGISTRATION=false"
+railway variables --set "BACKEND_INTERNAL_URL=http://localhost:3000"
+```
+
+### STEP 4: Generate Domain & Set URLs ✅
+```bash
+# Generate Railway domain (COMPLETED ✅)
+railway domain
+# Result: https://postiz-app-production.up.railway.app
+
+# Set URL variables (COMPLETED ✅)
+railway variables --set "MAIN_URL=https://postiz-app-production.up.railway.app"
+railway variables --set "FRONTEND_URL=https://postiz-app-production.up.railway.app"
+railway variables --set "NEXT_PUBLIC_BACKEND_URL=https://postiz-app-production.up.railway.app/api"
+```
+
+### STEP 5: Monitor & Test
+```bash
+# Watch deployment status
+railway logs
+
+# View all variables
+railway variables
+
+# Open in browser
+railway open
+
+# Redeploy if needed
+railway redeploy
+```
 
 ---
 
