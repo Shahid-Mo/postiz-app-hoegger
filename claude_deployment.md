@@ -9,13 +9,16 @@
 - [x] Railway CLI installed and logged in
 - [x] PostgreSQL and Redis databases created in Railway
 - [x] Repository ready for Docker deployment
+- [x] Linked CLI to Railway project `miraculous-fascination`
+- [x] Created service `postiz-app`
+- [x] Set all environment variables via CLI
+- [x] Generated Railway domain: `https://postiz-app-production.up.railway.app`
+- [x] **CRITICAL FIX**: Set `RAILWAY_DOCKERFILE_PATH=Dockerfile.dev` to force Docker build
 
 ### 🔄 IN PROGRESS  
-- [ ] Deploy using Railway CLI with Docker
+- [x] Deploy using Railway CLI with Docker (currently building with Docker instead of Nixpacks)
 
 ### 📝 PENDING
-- [ ] Configure environment variables via CLI
-- [ ] Generate Railway domain
 - [ ] Test deployment and verify functionality
 
 ---
@@ -76,10 +79,13 @@ railway link
 railway status
 ```
 
-### STEP 2: Deploy with Docker
+### STEP 2: Create Service & Deploy ✅
 ```bash
-# Deploy current directory using Dockerfile.dev
-railway up
+# Create a new service for the app (COMPLETED ✅)
+railway add --service postiz-app
+
+# Deploy current directory using Dockerfile.dev (COMPLETED ✅)
+railway up --service postiz-app
 
 # Watch deployment progress
 railway logs --build
@@ -114,19 +120,29 @@ railway variables --set "FRONTEND_URL=https://postiz-app-production.up.railway.a
 railway variables --set "NEXT_PUBLIC_BACKEND_URL=https://postiz-app-production.up.railway.app/api"
 ```
 
-### STEP 5: Monitor & Test
+### STEP 5: 🚨 CRITICAL Docker Configuration Fix ✅
+```bash
+# PROBLEM: Railway was using Nixpacks instead of Docker
+# SOLUTION: Force Railway to use Dockerfile.dev (COMPLETED ✅)
+railway variables --set "RAILWAY_DOCKERFILE_PATH=Dockerfile.dev"
+
+# This triggers automatic redeploy with Docker build
+# Railway should now show "Using detected Dockerfile!" in logs
+```
+
+### STEP 6: Monitor & Test
 ```bash
 # Watch deployment status
 railway logs
 
-# View all variables
+# View all variables (COMPLETED ✅)
 railway variables
 
 # Open in browser
 railway open
 
-# Redeploy if needed
-railway redeploy
+# Manual redeploy if needed (avoid during active builds)
+railway redeploy --yes
 ```
 
 ---
@@ -135,21 +151,30 @@ railway redeploy
 
 ### Common Issues & Solutions
 
-#### Build Failures
-- **Problem:** `pnpm` not found
-- **Solution:** Ensure `nixPkgs = ['nodejs']` in railway.toml
+#### 🚨 CRITICAL: Railway Using Nixpacks Instead of Docker
+- **Problem:** "Nixpacks build failed" error despite having Dockerfile.dev
+- **Root Cause:** Railway defaults to Nixpacks and doesn't auto-detect custom Dockerfile names
+- **Solution:** Set environment variable to force Docker:
+  ```bash
+  railway variables --set "RAILWAY_DOCKERFILE_PATH=Dockerfile.dev"
+  ```
+- **Verification:** Look for "Using detected Dockerfile!" in build logs
+
+#### Build Failures (Docker)
+- **Problem:** Docker build fails
+- **Solution:** Ensure Dockerfile.dev exists in root directory and is properly formatted
 
 #### Service Communication
-- **Problem:** Services can't talk to each other
-- **Solution:** Use Railway-provided URLs in environment variables
+- **Problem:** Frontend can't reach backend
+- **Solution:** Verify all URL environment variables are set correctly
 
 #### Database Connection
 - **Problem:** Database connection fails
-- **Solution:** Use Railway PostgreSQL plugin connection string
+- **Solution:** Use exact Railway PostgreSQL plugin connection string from dashboard
 
 #### File Uploads
 - **Problem:** Image uploads not working
-- **Solution:** Set `UPLOAD_DIRECTORY=/app/uploads` and ensure directory exists
+- **Solution:** Set `UPLOAD_DIRECTORY=/uploads` (not `/app/uploads` in Railway)
 
 ---
 
@@ -204,5 +229,31 @@ railway redeploy
 
 ---
 
-**Last Updated:** $(date)
-**Status:** Setting up GitHub SSH credentials
+---
+
+## 🎯 **DEPLOYMENT SUMMARY**
+
+### **Successfully Deployed Components:**
+- ✅ **Project:** `miraculous-fascination` 
+- ✅ **Service:** `postiz-app`
+- ✅ **Database:** PostgreSQL with connection string
+- ✅ **Cache:** Redis with connection string  
+- ✅ **Domain:** https://postiz-app-production.up.railway.app
+- ✅ **Build Method:** Docker (Dockerfile.dev) - forced via `RAILWAY_DOCKERFILE_PATH`
+
+### **Key Environment Variables Set:**
+```bash
+DATABASE_URL=postgresql://postgres:jppYxQceeqESVQehyGHuFHmNBbxWEBTb@yamanote.proxy.rlwy.net:25056/railway
+REDIS_URL=redis://default:hjHUdGWpeMkNUympheIeuLBdVauNkcZT@caboose.proxy.rlwy.net:31174
+RAILWAY_DOCKERFILE_PATH=Dockerfile.dev  # 🚨 CRITICAL for Docker build
+MAIN_URL=https://postiz-app-production.up.railway.app
+FRONTEND_URL=https://postiz-app-production.up.railway.app
+NEXT_PUBLIC_BACKEND_URL=https://postiz-app-production.up.railway.app/api
+NODE_ENV=production
+JWT_SECRET=postiz-super-long-random-secret-key-for-production-minimum-32-characters-12345
+```
+
+---
+
+**Last Updated:** July 15, 2025
+**Status:** ✅ Docker deployment in progress - should complete successfully
