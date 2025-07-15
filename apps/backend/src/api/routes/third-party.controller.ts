@@ -27,28 +27,12 @@ export class ThirdPartyController {
 
   @Get('/list')
   async getThirdPartyList() {
-    return this._thirdPartyManager.getAllThirdParties();
+    return { message: "Third-party integrations disabled", data: [] };
   }
 
   @Get('/')
   async getSavedThirdParty(@GetOrgFromRequest() organization: Organization) {
-    return Promise.all(
-      (
-        await this._thirdPartyManager.getAllThirdPartiesByOrganization(
-          organization.id
-        )
-      ).map((thirdParty) => {
-        const { description, fields, position, title, identifier } =
-          this._thirdPartyManager.getThirdPartyByName(thirdParty.identifier);
-        return {
-          ...thirdParty,
-          title,
-          position,
-          fields,
-          description,
-        };
-      })
-    );
+    return { message: "Third-party integrations disabled", data: [] };
   }
 
   @Delete('/:id')
@@ -56,7 +40,7 @@ export class ThirdPartyController {
     @GetOrgFromRequest() organization: Organization,
     @Param('id') id: string
   ) {
-    return this._thirdPartyManager.deleteIntegration(organization.id, id);
+    throw new HttpException('Third-party integrations disabled', 400);
   }
 
   @Post('/:id/submit')
@@ -65,30 +49,7 @@ export class ThirdPartyController {
     @Param('id') id: string,
     @Body() data: any
   ) {
-    const thirdParty = await this._thirdPartyManager.getIntegrationById(
-      organization.id,
-      id
-    );
-
-    if (!thirdParty) {
-      throw new HttpException('Integration not found', 404);
-    }
-
-    const thirdPartyInstance = this._thirdPartyManager.getThirdPartyByName(
-      thirdParty.identifier
-    );
-
-    if (!thirdPartyInstance) {
-      throw new HttpException('Invalid identifier', 400);
-    }
-
-    const loadedData = await thirdPartyInstance?.instance?.sendData(
-      AuthService.fixedDecryption(thirdParty.apiKey),
-      data
-    );
-
-    const file = await this.storage.uploadSimple(loadedData);
-    return this._mediaService.saveFile(organization.id, file.split('/').pop(), file);
+    throw new HttpException('Third-party integrations disabled', 400);
   }
 
   @Post('/function/:id/:functionName')
@@ -98,27 +59,7 @@ export class ThirdPartyController {
     @Param('functionName') functionName: string,
     @Body() data: any
   ) {
-    const thirdParty = await this._thirdPartyManager.getIntegrationById(
-      organization.id,
-      id
-    );
-
-    if (!thirdParty) {
-      throw new HttpException('Integration not found', 404);
-    }
-
-    const thirdPartyInstance = this._thirdPartyManager.getThirdPartyByName(
-      thirdParty.identifier
-    );
-
-    if (!thirdPartyInstance) {
-      throw new HttpException('Invalid identifier', 400);
-    }
-
-    return thirdPartyInstance?.instance?.[functionName](
-      AuthService.fixedDecryption(thirdParty.apiKey),
-      data
-    );
+    throw new HttpException('Third-party integrations disabled', 400);
   }
 
   @Post('/:identifier')
@@ -127,34 +68,6 @@ export class ThirdPartyController {
     @Param('identifier') identifier: string,
     @Body('api') api: string
   ) {
-    const thirdParty = this._thirdPartyManager.getThirdPartyByName(identifier);
-    if (!thirdParty) {
-      throw new HttpException('Invalid identifier', 400);
-    }
-
-    const connect = await thirdParty.instance.checkConnection(api);
-    if (!connect) {
-      throw new HttpException('Invalid API key', 400);
-    }
-
-    try {
-      const save = await this._thirdPartyManager.saveIntegration(
-        organization.id,
-        identifier,
-        api,
-        {
-          name: connect.name,
-          username: connect.username,
-          id: connect.id,
-        }
-      );
-
-      return {
-        id: save.id,
-      };
-    } catch (e) {
-      console.log(e);
-      throw new HttpException('Integration Already Exists', 400);
-    }
+    throw new HttpException('Third-party integrations disabled', 400);
   }
 }
