@@ -255,5 +255,99 @@ JWT_SECRET=postiz-super-long-random-secret-key-for-production-minimum-32-charact
 
 ---
 
+---
+
+## 🐛 **CURRENT ISSUE: Port Configuration Problem**
+
+### **Problem Status: PARTIALLY RESOLVED**
+- ✅ **Docker Build:** Fixed ThirdPartyController TypeScript errors with stub methods
+- ✅ **Deployment:** Successfully deploys to Railway
+- ❌ **Frontend Access:** Only shows "App is running" - frontend not accessible
+
+### **Root Cause Analysis:**
+The Dockerfile.dev uses a **multi-service architecture**:
+
+1. **Caddy (Port 5000)** - Public reverse proxy
+2. **Frontend (Port 4200)** - Next.js application (internal)
+3. **Backend (Port 3000)** - NestJS API (internal)
+4. **Supervisord** - Manages all services
+
+**Current Issue:** Railway was exposing port 3000 (backend only) instead of port 5000 (Caddy proxy).
+
+### **Architecture Flow:**
+```
+Internet → Railway (5000) → Caddy → {Frontend (4200), Backend (3000)}
+```
+
+### **Attempted Fixes:**
+```bash
+# Set Railway to expose port 5000 where Caddy runs
+railway variables --set "PORT=5000"
+
+# Previous attempt (should be 5000, not 3000)
+railway domain --port 5000
+```
+
+### **Key Configuration Files:**
+
+#### Dockerfile.dev Architecture:
+- **EXPOSE 4200** (should be 5000)
+- **CMD ["pnpm", "run", "pm2"]** - Starts supervisord + Caddy + services
+
+#### Caddy Configuration (var/docker/Caddyfile):
+```
+:5000 {
+    handle_path /api/* {
+        reverse_proxy * localhost:3000  # Backend
+    }
+    handle_path /uploads/* {
+        root * /uploads/
+        file_server
+    }
+    handle {
+        reverse_proxy * localhost:4200  # Frontend
+    }
+}
+```
+
+#### Entrypoint Script (var/docker/entrypoint.sh):
+- Waits for ports 4200 and 3000 to be ready
+- Starts Caddy on port 5000
+
+### **Next Steps to Try:**
+
+#### Option 1: Fix Dockerfile Port Exposure
+```dockerfile
+# Change in Dockerfile.dev line 19:
+EXPOSE 5000  # Instead of EXPOSE 4200
+```
+
+#### Option 2: Verify All Services Start
+- Check Railway logs to ensure frontend, backend, and Caddy all start
+- Verify supervisord configuration is working
+
+#### Option 3: Simplify Architecture
+- Consider single-port deployment if multi-service is problematic
+- Modify to serve frontend and backend on same port
+
+### **Environment Variables Status:** ✅ ALL CORRECT
+```bash
+DATABASE_URL=postgresql://postgres:jpp...@yamanote.proxy.rlwy.net:25056/railway
+REDIS_URL=redis://default:hjH...@caboose.proxy.rlwy.net:31174
+RAILWAY_DOCKERFILE_PATH=Dockerfile.dev  # ✅ Forces Docker build
+PORT=5000  # ✅ Should expose Caddy port
+MAIN_URL=https://postiz-app-production.up.railway.app
+FRONTEND_URL=https://postiz-app-production.up.railway.app
+NEXT_PUBLIC_BACKEND_URL=https://postiz-app-production.up.railway.app/api
+NODE_ENV=production
+```
+
+### **Current URL Status:**
+- **https://postiz-app-production.up.railway.app** → "App is running" (backend only)
+- **https://postiz-app-production.up.railway.app/auth/login** → 404 Not Found
+- **Expected:** Full Postiz login interface
+
+---
+
 **Last Updated:** July 15, 2025
-**Status:** ✅ Docker deployment in progress - should complete successfully
+**Status:** 🔧 Port configuration issue - backend works, frontend not accessible
