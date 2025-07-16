@@ -31,25 +31,6 @@ export const ApprovalsComponent: FC = () => {
     search: '',
   });
 
-  // Test query to fetch ALL posts (to see if any posts exist)
-  const testLoadData = useCallback(async () => {
-    const currentDate = new Date();
-    const testParams = new URLSearchParams({
-      display: 'month',
-      day: '0',
-      week: '1',
-      month: (currentDate.getMonth() + 1).toString(),
-      year: currentDate.getFullYear().toString(),
-    });
-    const url = `/posts?${testParams.toString()}`;
-    console.log('🧪 Test API call (all posts):', url);
-    const response = await fetch(url);
-    const data = await response.json();
-    console.log('🧪 Test API response:', data);
-    return data;
-  }, [fetch]);
-
-  const { data: testData } = useSWR('test-all-posts', testLoadData);
 
   const [selectedPosts, setSelectedPosts] = useState<string[]>([]);
   const [bulkAction, setBulkAction] = useState<'approve' | 'reject' | null>(null);
@@ -70,10 +51,8 @@ export const ApprovalsComponent: FC = () => {
 
   const loadData = useCallback(async () => {
     const url = `/posts?${queryParams.toString()}`;
-    console.log('🌐 Fetching data from:', url);
     const response = await fetch(url);
     const data = await response.json();
-    console.log('📥 API Response:', data);
     return data;
   }, [queryParams.toString(), fetch]);
 
@@ -85,16 +64,6 @@ export const ApprovalsComponent: FC = () => {
 
   const drafts = draftsData?.posts || [];
   const isLoading = !draftsData && !error;
-
-  // Debug logging
-  console.log('🔍 Approvals Debug:', {
-    queryUrl: `/posts?${queryParams.toString()}`,
-    draftsData,
-    error,
-    isLoading,
-    draftsCount: drafts.length,
-    filters
-  });
 
   // Handle filter changes
   const updateFilters = useCallback((newFilters: Partial<ApprovalsState>) => {
@@ -155,17 +124,6 @@ export const ApprovalsComponent: FC = () => {
 
       {/* Content */}
       <div className="flex-1 mt-6">
-        {/* Debug Info */}
-        <div className="mb-4 p-4 bg-yellow-100 border border-yellow-300 rounded">
-          <h3 className="font-bold">Debug Info:</h3>
-          <p>Loading: {isLoading ? 'Yes' : 'No'}</p>
-          <p>Error: {error ? JSON.stringify(error) : 'None'}</p>
-          <p>Drafts Data: {JSON.stringify(draftsData)}</p>
-          <p>Test Data: {JSON.stringify(testData)}</p>
-          <p>Drafts Count: {drafts.length}</p>
-          <p>API URL: /posts?{queryParams.toString()}</p>
-        </div>
-
         {error ? (
           <div className="text-center py-8">
             <p className="text-red-500">{t('error.loading', 'Failed to load posts')}</p>

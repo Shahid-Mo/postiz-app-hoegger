@@ -14,6 +14,7 @@
 - [x] Set all environment variables via CLI
 - [x] Generated Railway domain: `https://postiz-app-production.up.railway.app`
 - [x] **CRITICAL FIX**: Set `RAILWAY_DOCKERFILE_PATH=Dockerfile.dev` to force Docker build
+- [x] **CRITICAL GIT REQUIREMENT**: Must be ahead of commit `484ab226a9d9ad3f719c8bc52af69bb67031ce65` (ThirdPartyController stub fixes) to avoid deployment errors
 
 ### 🔄 IN PROGRESS  
 - [x] Deploy using Railway CLI with Docker (currently building with Docker instead of Nixpacks)
@@ -150,6 +151,19 @@ railway redeploy --yes
 ## 🔧 Troubleshooting Guide
 
 ### Common Issues & Solutions
+
+#### 🚨 CRITICAL: Git Requirements for Deployment
+- **Problem:** Deployment fails with ThirdPartyController errors during runtime
+- **Root Cause:** Without the stub fixes, the app crashes on startup due to missing third-party controller methods
+- **Solution:** Ensure git is ahead of commit `484ab226a9d9ad3f719c8bc52af69bb67031ce65`
+  ```bash
+  # Check current commit
+  git log --oneline -1
+  
+  # Must be ahead of this commit for stable deployment
+  # 484ab22 fix: replace ThirdPartyController methods with safe stubs
+  ```
+- **Verification:** App should start without ThirdPartyController errors
 
 #### 🚨 CRITICAL: Railway Using Nixpacks Instead of Docker
 - **Problem:** "Nixpacks build failed" error despite having Dockerfile.dev
