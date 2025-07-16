@@ -6,3 +6,7 @@ dockerfilePath = "Dockerfile.dev"
 startCommand = "pnpm run pm2"
 restartPolicyType = "on_failure"
 restartPolicyMaxRetries = 3
+
+[environments.production]
+# Load production environment variables
+envFile = ".env.production"
