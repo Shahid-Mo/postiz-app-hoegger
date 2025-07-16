@@ -1,0 +1,8 @@
+[build]
+builder = "dockerfile"
+dockerfilePath = "Dockerfile.dev"
+
+[deploy]
+startCommand = "pnpm run pm2"
+restartPolicyType = "on_failure"
+restartPolicyMaxRetries = 3
