@@ -33,8 +33,32 @@ export class FacebookProvider extends SocialAbstract implements SocialProvider {
     };
   }
 
+  /**
+   * Generates Facebook OAuth authorization URL with support for Facebook Login for Business
+   * 
+   * Facebook Login for Business requires a 'config_id' parameter for Business-type apps.
+   * This parameter specifies which configuration to use from the Meta App Dashboard.
+   * 
+   * Configuration setup in Meta App Dashboard:
+   * 1. Create Business-type app
+   * 2. Add "Facebook Login for Business" product
+   * 3. Create configuration with required permissions
+   * 4. Copy the Configuration ID
+   * 
+   * The config_id enables:
+   * - Business asset access (pages, ad accounts, etc.)
+   * - Long-lived system user tokens
+   * - Granular permission management
+   * - Compliance with Facebook's business integration requirements
+   * 
+   * Current config_id: 1292384395588902 (hardcoded for initial implementation)
+   * TODO: Move to environment variable FACEBOOK_CONFIG_ID for production use
+   * 
+   * @returns OAuth URL with config_id for Facebook Login for Business support
+   */
   async generateAuthUrl() {
     const state = makeId(6);
+    
     return {
       url:
         'https://www.facebook.com/v20.0/dialog/oauth' +
@@ -43,7 +67,8 @@ export class FacebookProvider extends SocialAbstract implements SocialProvider {
           `${process.env.FRONTEND_URL}/integrations/social/facebook`
         )}` +
         `&state=${state}` +
-        `&scope=${this.scopes.join(',')}`,
+        `&scope=${this.scopes.join(',')}` +
+        `&config_id=1292384395588902`, // Facebook Login for Business configuration ID
       codeVerifier: makeId(10),
       state,
     };
