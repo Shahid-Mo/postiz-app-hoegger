@@ -14,12 +14,13 @@ export class FacebookProvider extends SocialAbstract implements SocialProvider {
   name = 'Facebook Page';
   isBetweenSteps = true;
   scopes = [
+    'email', // Added this Aug 4th, delete if its not working
     'pages_show_list',
-    'business_management',
+    // 'business_management',
     'pages_manage_posts',
-    'pages_manage_engagement',
+    // 'pages_manage_engagement',
     'pages_read_engagement',
-    'read_insights',
+    // 'read_insights',
   ];
   async refreshToken(refresh_token: string): Promise<AuthTokenDetails> {
     return {

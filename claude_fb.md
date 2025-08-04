@@ -8,6 +8,19 @@
 **Configuration ID:** `1292384395588902` (hardcoded)  
 **Files Modified:** 2 files updated with comprehensive documentation
 
+### ✅ SCOPE CHANGES APPLIED
+
+**Permissions Updated (August 4th):**
+- ✅ **Added:** `email` scope for improved user authentication
+- ✅ **Maintained:** Core Facebook page management permissions
+- ✅ **Optimized:** Commented out unused permissions for cleaner implementation
+
+**Current Active Scopes:**
+- `email` - User email for authentication
+- `pages_show_list` - Access to user's Facebook pages
+- `pages_manage_posts` - Post content to pages
+- `pages_read_engagement` - Read engagement metrics
+
 ## Previous Analysis ✅
 
 ### Facebook Integration Status (BEFORE)
@@ -115,13 +128,16 @@ FACEBOOK_APP_SECRET=""
    - Better for business integrations like Postiz
 
 #### Required Permissions for Postiz
-Based on current `facebook.provider.ts` scopes (lines 16-23):
+Based on current `facebook.provider.ts` scopes (lines 16-24):
+- `email` ✅ (Added Aug 4th)
 - `pages_show_list` ✅
-- `business_management` ✅
 - `pages_manage_posts` ✅
-- `pages_manage_engagement` ✅
 - `pages_read_engagement` ✅
-- `read_insights` ✅
+
+**Commented Out (Available if needed):**
+- `business_management` (line 19 - commented)
+- `pages_manage_engagement` (line 21 - commented)
+- `read_insights` (line 23 - commented)
 
 ## Implementation Plan
 
@@ -309,7 +325,7 @@ https://www.facebook.com/v20.0/dialog/oauth
 ?client_id=${FACEBOOK_APP_ID}
 &redirect_uri=${FRONTEND_URL}/integrations/social/facebook
 &state=${state}
-&scope=pages_show_list,business_management,pages_manage_posts,pages_manage_engagement,pages_read_engagement,read_insights
+&scope=email,pages_show_list,pages_manage_posts,pages_read_engagement
 &config_id=1292384395588902
 ```
 
