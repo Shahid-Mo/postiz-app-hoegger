@@ -37,8 +37,9 @@ export class FacebookProvider extends SocialAbstract implements SocialProvider {
   /**
    * Generates Facebook OAuth authorization URL with support for Facebook Login for Business
    * 
-   * Facebook Login for Business requires a 'config_id' parameter for Business-type apps.
-   * This parameter specifies which configuration to use from the Meta App Dashboard.
+   * Facebook Login for Business uses config_id for permission management instead of scopes.
+   * The config_id parameter specifies which configuration to use from the Meta App Dashboard,
+   * and all permissions are managed through that configuration rather than URL parameters.
    * 
    * Configuration setup in Meta App Dashboard:
    * 1. Create Business-type app
@@ -49,11 +50,10 @@ export class FacebookProvider extends SocialAbstract implements SocialProvider {
    * The config_id enables:
    * - Business asset access (pages, ad accounts, etc.)
    * - Long-lived system user tokens
-   * - Granular permission management
+   * - Granular permission management through Meta dashboard
    * - Compliance with Facebook's business integration requirements
    * 
-   * Current config_id: 1292384395588902 (hardcoded for initial implementation)
-   * TODO: Move to environment variable FACEBOOK_CONFIG_ID for production use
+   * Current config_id: 1335176651654951 (production configuration)
    * 
    * @returns OAuth URL with config_id for Facebook Login for Business support
    */
@@ -67,9 +67,10 @@ export class FacebookProvider extends SocialAbstract implements SocialProvider {
         `&redirect_uri=${encodeURIComponent(
           `${process.env.FRONTEND_URL}/integrations/social/facebook`
         )}` +
-        `&state=${state}` +
-        `&scope=${this.scopes.join(',')}` +
-        `&config_id=1292384395588902`, // Facebook Login for Business configuration ID
+        `&config_id=1335176651654951` +
+        `&response_type=code` +
+        `&override_default_response_type=true` +
+        `&state=${state}`,
       codeVerifier: makeId(10),
       state,
     };

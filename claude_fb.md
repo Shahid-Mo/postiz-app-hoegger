@@ -5,21 +5,23 @@
 ### Status: Facebook Login for Business SUCCESSFULLY IMPLEMENTED ✅
 
 **Implementation Date:** August 4, 2025  
-**Configuration ID:** `1292384395588902` (hardcoded)  
+**Updated:** August 5, 2025 - Removed scopes, added missing parameters  
+**Configuration ID:** `1335176651654951` (production configuration)  
 **Files Modified:** 2 files updated with comprehensive documentation
 
-### ✅ SCOPE CHANGES APPLIED
+### ✅ PERMISSION MANAGEMENT UPDATED (August 5th)
 
-**Permissions Updated (August 4th):**
-- ✅ **Added:** `email` scope for improved user authentication
-- ✅ **Maintained:** Core Facebook page management permissions
-- ✅ **Optimized:** Commented out unused permissions for cleaner implementation
+**Major Change:** Scopes are no longer passed in OAuth URL
+- ✅ **Removed:** All scope parameters from OAuth URL
+- ✅ **Implemented:** Config-based permission management via Meta dashboard
+- ✅ **Added:** Required OAuth parameters for proper Business integration
 
-**Current Active Scopes:**
+**Permissions Now Managed Via Config ID (1335176651654951):**
 - `email` - User email for authentication
 - `pages_show_list` - Access to user's Facebook pages
 - `pages_manage_posts` - Post content to pages
 - `pages_read_engagement` - Read engagement metrics
+- Additional permissions configured in Meta App Dashboard
 
 ## Previous Analysis ✅
 
@@ -35,13 +37,14 @@
 
 #### ✅ Code Changes Applied
 
-**1. Facebook Provider OAuth URL (`facebook.provider.ts:59-75`)**
+**1. Facebook Provider OAuth URL (`facebook.provider.ts:60-77`) - UPDATED August 5th**
 ```typescript
 /**
  * Generates Facebook OAuth authorization URL with support for Facebook Login for Business
  * 
- * Facebook Login for Business requires a 'config_id' parameter for Business-type apps.
- * This parameter specifies which configuration to use from the Meta App Dashboard.
+ * Facebook Login for Business uses config_id for permission management instead of scopes.
+ * The config_id parameter specifies which configuration to use from the Meta App Dashboard,
+ * and all permissions are managed through that configuration rather than URL parameters.
  * 
  * Configuration setup in Meta App Dashboard:
  * 1. Create Business-type app
@@ -52,11 +55,10 @@
  * The config_id enables:
  * - Business asset access (pages, ad accounts, etc.)
  * - Long-lived system user tokens
- * - Granular permission management
+ * - Granular permission management through Meta dashboard
  * - Compliance with Facebook's business integration requirements
  * 
- * Current config_id: 1292384395588902 (hardcoded for initial implementation)
- * TODO: Move to environment variable FACEBOOK_CONFIG_ID for production use
+ * Current config_id: 1335176651654951 (production configuration)
  * 
  * @returns OAuth URL with config_id for Facebook Login for Business support
  */
@@ -70,9 +72,10 @@ async generateAuthUrl() {
       `&redirect_uri=${encodeURIComponent(
         `${process.env.FRONTEND_URL}/integrations/social/facebook`
       )}` +
-      `&state=${state}` +
-      `&scope=${this.scopes.join(',')}` +
-      `&config_id=1292384395588902`, // Facebook Login for Business configuration ID
+      `&config_id=1335176651654951` +
+      `&response_type=code` +
+      `&override_default_response_type=true` +
+      `&state=${state}`,
     codeVerifier: makeId(10),
     state,
   };
@@ -319,15 +322,22 @@ This minimal change will enable Facebook Login for Business while maintaining ba
 - Environment variable preparation for future flexibility
 - No breaking changes to existing functionality
 
-### Current OAuth URL Structure
+### Current OAuth URL Structure (Updated August 5th)
 ```
 https://www.facebook.com/v20.0/dialog/oauth
 ?client_id=${FACEBOOK_APP_ID}
 &redirect_uri=${FRONTEND_URL}/integrations/social/facebook
+&config_id=1335176651654951
+&response_type=code
+&override_default_response_type=true
 &state=${state}
-&scope=email,pages_show_list,pages_manage_posts,pages_read_engagement
-&config_id=1292384395588902
 ```
+
+**Key Changes Made:**
+- ✅ **Removed:** `scope` parameter (managed via config_id)
+- ✅ **Updated:** config_id to `1335176651654951` (working production config)
+- ✅ **Added:** `response_type=code` (required for proper OAuth flow)
+- ✅ **Added:** `override_default_response_type=true` (Facebook requirement)
 
 ### Next Steps for Testing
 1. **Deploy to Railway:** Push changes to trigger deployment
@@ -347,3 +357,49 @@ https://www.facebook.com/v20.0/dialog/oauth
 - ✅ **Future Compliance:** Aligned with Facebook's business integration requirements
 
 **Status: READY FOR DEPLOYMENT AND TESTING** 🚀
+
+---
+
+## ✅ AUGUST 5TH UPDATE - FINAL CONFIGURATION
+
+### ✅ COMPLETED CHANGES (August 5, 2025)
+
+**Problem Solved:**
+- OAuth URL was not matching the working test URL format
+- Missing required Facebook Business parameters
+- Scopes being passed when config_id should handle permissions
+
+**Changes Implemented:**
+
+#### 1. ✅ Removed Scope Parameters
+- **Before:** `&scope=${this.scopes.join(',')}`
+- **After:** Scopes removed entirely (managed via config_id in Meta dashboard)
+- **Reason:** Facebook Login for Business manages permissions via configuration, not URL parameters
+
+#### 2. ✅ Updated Configuration ID  
+- **Before:** `config_id=1292384395588902`
+- **After:** `config_id=1335176651654951`
+- **Reason:** Updated to working production configuration
+
+#### 3. ✅ Added Required OAuth Parameters
+- **Added:** `&response_type=code` (required for OAuth code flow)
+- **Added:** `&override_default_response_type=true` (Facebook Business requirement)
+- **Reason:** These parameters were missing from original implementation but required for proper Business integration
+
+#### 4. ✅ Updated Documentation
+- **Updated:** All code examples to reflect new implementation
+- **Updated:** Configuration ID references throughout document
+- **Added:** Explanation of parameter changes and reasoning
+
+### Final OAuth URL Format (Matches Working Test URL)
+```
+https://www.facebook.com/v20.0/dialog/oauth
+?client_id=2748757611985650
+&redirect_uri=https://postiz-app-hoegger-production.up.railway.app/integrations/social/facebook
+&config_id=1335176651654951
+&response_type=code
+&override_default_response_type=true
+&state=TEST123
+```
+
+**Status: IMPLEMENTATION COMPLETE AND READY FOR TESTING** ✅
