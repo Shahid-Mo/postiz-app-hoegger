@@ -14,7 +14,7 @@ export class FacebookProvider extends SocialAbstract implements SocialProvider {
   name = 'Facebook Page';
   isBetweenSteps = true;
   scopes = [
-    'email', // Added this Aug 4th, delete if its not working
+    // 'email', // Removed - not available in Facebook app permissions
     'pages_show_list',
     // 'business_management',
     'pages_manage_posts',
