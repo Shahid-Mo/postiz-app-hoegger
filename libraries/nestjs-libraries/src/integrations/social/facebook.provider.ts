@@ -70,6 +70,7 @@ export class FacebookProvider extends SocialAbstract implements SocialProvider {
         `&config_id=1335176651654951` +
         `&response_type=code` +
         `&override_default_response_type=true` +
+        `&scope=${this.scopes.join(',')}` +
         `&state=${state}`,
       codeVerifier: makeId(10),
       state,
