@@ -70,9 +70,14 @@ export abstract class SocialAbstract {
   }
 
   checkScopes(required: string[], got: string | string[]) {
+    console.log('[DEBUG] Required scopes:', required);
+    console.log('[DEBUG] Granted scopes:', got);
+    
     if (Array.isArray(got)) {
-      if (!required.every((scope) => got.includes(scope))) {
-        throw new NotEnoughScopes();
+      const missing = required.filter(scope => !got.includes(scope));
+      if (missing.length > 0) {
+        console.log('[DEBUG] Missing scopes:', missing);
+        throw new NotEnoughScopes(`Missing required scopes: ${missing.join(', ')}`);
       }
 
       return true;
@@ -82,8 +87,11 @@ export abstract class SocialAbstract {
 
     const splitType = newGot.indexOf(',') > -1 ? ',' : ' ';
     const gotArray = newGot.split(splitType);
-    if (!required.every((scope) => gotArray.includes(scope))) {
-      throw new NotEnoughScopes();
+    const missing = required.filter(scope => !gotArray.includes(scope));
+    if (missing.length > 0) {
+      console.log('[DEBUG] Missing scopes:', missing);
+      console.log('[DEBUG] Parsed granted scopes:', gotArray);
+      throw new NotEnoughScopes(`Missing required scopes: ${missing.join(', ')}`);
     }
 
     return true;
