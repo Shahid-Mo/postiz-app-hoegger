@@ -35,27 +35,26 @@ export class FacebookProvider extends SocialAbstract implements SocialProvider {
   }
 
   /**
-   * Generates Facebook OAuth authorization URL with support for Facebook Login for Business
+   * Generates Facebook OAuth authorization URL with User Access Token configuration
    * 
-   * Facebook Login for Business uses config_id for permission management instead of scopes.
-   * The config_id parameter specifies which configuration to use from the Meta App Dashboard,
-   * and all permissions are managed through that configuration rather than URL parameters.
+   * Uses Facebook Login for Business with User Access Token configuration for
+   * user-driven social media operations like post scheduling.
+   * 
+   * User Access Tokens:
+   * - Perfect for user-driven actions like social media scheduling
+   * - Clean OAuth flow without system-specific parameters
+   * - Uses personal Facebook account for authentication
+   * - Permissions managed via config_id in Meta App Dashboard
    * 
    * Configuration setup in Meta App Dashboard:
    * 1. Create Business-type app
    * 2. Add "Facebook Login for Business" product
-   * 3. Create configuration with required permissions
+   * 3. Create User Access Token configuration with required permissions
    * 4. Copy the Configuration ID
    * 
-   * The config_id enables:
-   * - Business asset access (pages, ad accounts, etc.)
-   * - Long-lived system user tokens
-   * - Granular permission management through Meta dashboard
-   * - Compliance with Facebook's business integration requirements
+   * Current config_id: 2169591926875611 (User Access Token configuration)
    * 
-   * Current config_id: 1335176651654951 (production configuration)
-   * 
-   * @returns OAuth URL with config_id for Facebook Login for Business support
+   * @returns OAuth URL with User Access Token config for standard social posting
    */
   async generateAuthUrl() {
     const state = makeId(6);
@@ -67,10 +66,7 @@ export class FacebookProvider extends SocialAbstract implements SocialProvider {
         `&redirect_uri=${encodeURIComponent(
           `${process.env.FRONTEND_URL}/integrations/social/facebook`
         )}` +
-        `&config_id=1335176651654951` +
-        `&response_type=code` +
-        `&override_default_response_type=true` +
-        `&scope=${this.scopes.join(',')}` +
+        `&config_id=2169591926875611` +
         `&state=${state}`,
       codeVerifier: makeId(10),
       state,
@@ -136,9 +132,9 @@ export class FacebookProvider extends SocialAbstract implements SocialProvider {
     const permissions = data
       .filter((d: any) => d.status === 'granted')
       .map((p: any) => p.permission);
-    // TODO: Fix Facebook app configuration to grant required scopes
-    // Temporarily bypassed scope check - Facebook config_id needs updating
-    // this.checkScopes(this.scopes, permissions);
+    // User Access Token configuration manages permissions via config_id
+    // Scope checking enabled for User Access Token flow
+    this.checkScopes(this.scopes, permissions);
 
     const {
       id,
